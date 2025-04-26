@@ -1,101 +1,195 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useRef, useEffect, useCallback } from "react";
+import { CosmicBackground } from "@/components/cosmic-background";
+import { BlackHoleInput } from "@/components/black-hole-input";
+import { ProverbCard } from "@/components/proverb-card";
+import { WormholeLoader } from "@/components/wormhole-loader";
+import { SupernovaError } from "@/components/supernova-error";
+import { ProverbDialog } from "@/components/proverb-dialog";
+import { LoadMoreIndicator } from "@/components/load-more-indicator";
+import { getAllProverbs, getNextProverbs } from "@/lib/firebase";
+import { generateProverb } from "@/lib/generate-proverb";
+import { Button } from "@/components/ui/button";
+import { twMerge } from "tailwind-merge";
+
+export default function HomePage() {
+  const [proverbs, setProverbs] = useState<Array<Proverb>>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const [lastDoc, setLastDoc] = useState<Proverb | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newProverb, setNewProverb] = useState<string>("");
+
+  useEffect(() => {
+    const loadInitialProverbs = async () => {
+      try {
+        setIsLoadingMore(true);
+        const initialProverbs = await getAllProverbs();
+        setProverbs(initialProverbs);
+        if (initialProverbs.length > 0) {
+          setLastDoc(initialProverbs[initialProverbs.length - 1]);
+        }
+        setHasMore(initialProverbs.length >= 6);
+      } catch (err) {
+        console.error("Failed to load initial proverbs:", err);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    };
+
+    loadInitialProverbs();
+  }, []);
+
+  const loadMoreProverbs = useCallback(async () => {
+    if (isLoadingMore || !hasMore || !lastDoc) return;
+
+    try {
+      setIsLoadingMore(true);
+      const newProverbs = await getNextProverbs(lastDoc);
+
+      if (newProverbs.length > 0) {
+        setProverbs((prev) => [...prev, ...newProverbs]);
+        setLastDoc(newProverbs[newProverbs.length - 1]);
+        setHasMore(newProverbs.length >= 6);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error("Failed to load more proverbs:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore, lastDoc]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMoreProverbs();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentObserverTarget = observerTarget.current;
+
+    if (currentObserverTarget) {
+      observer.observe(currentObserverTarget);
+    }
+
+    return () => {
+      if (currentObserverTarget) {
+        observer.unobserve(currentObserverTarget);
+      }
+    };
+  }, [loadMoreProverbs, hasMore, isLoadingMore]);
+
+  const handleGenerate = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (!inputValue) {
+        setError("စကားလုံးထည့်ပါ... (eg, ခွေး)");
+        return;
+      }
+
+      const generatedProverb = await generateProverb(inputValue);
+      if (!generatedProverb) {
+        setError("အမှားတစ်ခု ပေါက်ကွဲသွားပြီ! 🚀");
+        return;
+      }
+      setNewProverb(generatedProverb);
+      setInputValue("");
+      setDialogOpen(true);
+
+      const refreshedProverbs = await getAllProverbs();
+      setProverbs(refreshedProverbs);
+      if (refreshedProverbs.length > 0) {
+        setLastDoc(refreshedProverbs[refreshedProverbs.length - 1]);
+      }
+    } catch {
+      setError("အမှားတစ်ခု ပေါက်ကွဲသွားပြီ! 🚀");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-8 sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-[family-name:var(--font-geist-mono)] text-sm sm:text-left">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-semibold dark:bg-white/[.06]">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen relative" ref={containerRef}>
+      <CosmicBackground />
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent bg-foreground px-4 text-sm text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] sm:h-12 sm:px-5 sm:text-base"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+      <div className="min-h-screen flex flex-col items-center relative z-10 p-6">
+        <div className="mx-auto max-w-4xl w-full">
+          <h1 className="mb-8 text-center text-4xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text">
+            Myanmar Proverbs
+          </h1>
+
+          <div className="mb-12 flex flex-col gap-4 sm:flex-row">
+            <BlackHoleInput
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="🤔 စကားလုံးထည့်ပါ... (eg, ခွေး)"
             />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:border-transparent hover:bg-[#f2f2f2] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] sm:h-12 sm:min-w-44 sm:px-5 sm:text-base"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Button
+              className={twMerge(
+                isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                "py-3 rounded-lg h-full text-lg font-medium bg-gradient-to-r from-purple-700 to-fuchsia-600 text-white shadow-lg"
+              )}
+              onClick={handleGenerate}
+              disabled={isLoading}
+            >
+              {isLoading ? "Generating..." : "Get Proverb"}
+            </Button>
+          </div>
+
+          {isLoading && <WormholeLoader />}
+          {error && (
+            <SupernovaError message={error} onRetry={() => handleGenerate()} />
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-6">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="mx-auto mt-8 max-w-4xl w-full pb-16">
+          {proverbs.length === 0 && !isLoadingMore ? (
+            <div className="rounded-lg border border-purple-500/20 bg-purple-900/20 py-12 flex items-center justify-center">
+              <p className="text-2xl text-purple-400">မရှိသေးပါ</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                {proverbs.map((proverb) => (
+                  <ProverbCard key={proverb.id} proverb={proverb} />
+                ))}
+              </div>
+
+              <div ref={observerTarget} className="mt-4 h-4 w-full" />
+
+              {isLoadingMore && <LoadMoreIndicator />}
+
+              {!hasMore && proverbs.length > 0 && (
+                <div className="py-8 text-center text-purple-300">
+                  <p>You&apos;ve reached the end of the cosmic wisdom</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <ProverbDialog
+        proverb={{
+          text: newProverb,
+          id: "generated-proverb",
+        }}
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
     </div>
   );
 }
