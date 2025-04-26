@@ -122,10 +122,10 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen relative" ref={containerRef}>
+    <div className=" relative" ref={containerRef}>
       <CosmicBackground />
 
-      <div className="min-h-screen flex flex-col items-center relative z-10 p-6">
+      <div className="flex flex-col items-center relative z-10 p-6">
         <div className="mx-auto max-w-4xl w-full">
           <h1 className="mb-8 text-center text-4xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text">
             Myanmar Proverbs
@@ -155,7 +155,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="mx-auto mt-8 max-w-4xl w-full pb-16">
+        <div className="mx-auto mt-8 max-w-4xl w-full pb-16 overflow-y-auto">
           {proverbs.length === 0 && !isLoadingMore ? (
             <div className="rounded-lg border border-purple-500/20 bg-purple-900/20 py-12 flex items-center justify-center">
               <p className="text-2xl text-purple-400">မရှိသေးပါ</p>
