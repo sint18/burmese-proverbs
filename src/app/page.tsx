@@ -35,7 +35,7 @@ export default function HomePage() {
         if (initialProverbs.length > 0) {
           setLastDoc(initialProverbs[initialProverbs.length - 1]);
         }
-        setHasMore(initialProverbs.length >= 6);
+        setHasMore(initialProverbs.length === 6);
       } catch (err) {
         console.error("Failed to load initial proverbs:", err);
       } finally {
@@ -56,7 +56,7 @@ export default function HomePage() {
       if (newProverbs.length > 0) {
         setProverbs((prev) => [...prev, ...newProverbs]);
         setLastDoc(newProverbs[newProverbs.length - 1]);
-        setHasMore(newProverbs.length >= 6);
+        setHasMore(newProverbs.length === 6);
       } else {
         setHasMore(false);
       }
@@ -155,7 +155,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="mx-auto mt-8 max-w-4xl w-full pb-16 overflow-y-auto">
+        <div className="mx-auto mt-8 max-w-4xl w-full max-h-[70vh] pb-16 overflow-y-auto">
           {proverbs.length === 0 && !isLoadingMore ? (
             <div className="rounded-lg border border-purple-500/20 bg-purple-900/20 py-12 flex items-center justify-center">
               <p className="text-2xl text-purple-400">မရှိသေးပါ</p>

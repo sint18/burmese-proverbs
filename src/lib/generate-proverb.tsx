@@ -31,7 +31,7 @@ export async function generateProverb(prompt: string) {
   try {
     console.log("Generating proverb with prompt:", prompt);
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
+      model: "gemini-2.5-flash-preview-04-17",
       contents: [createUserContent(["RELATED WORD: " + prompt])],
       config: {
         responseMimeType: "application/json",

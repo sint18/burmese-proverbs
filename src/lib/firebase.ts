@@ -1,5 +1,6 @@
 "use server";
 import admin from "firebase-admin";
+import { snap } from "gsap";
 
 const serviceAccount = JSON.parse(
   process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT as string
@@ -28,12 +29,20 @@ export async function getAllProverbs() {
 }
 
 export async function getNextProverbs(lastDoc: Proverb, limit: number = 6) {
+  const lastDocRef = await db.collection("proverbs").doc(lastDoc.id).get();
+  if (!lastDocRef.exists) {
+    throw new Error("Last document not found");
+  }
   const snapshot = await db
     .collection("proverbs")
     .orderBy("createdAt", "desc")
-    .startAfter(lastDoc)
+    .startAfter(lastDocRef)
     .limit(limit)
     .get();
+
+  snapshot.docs.forEach((doc) => {
+    console.log(doc.id, " => ", doc.data());
+  });
 
   return snapshot.docs.map((doc) => ({
     id: doc.id,

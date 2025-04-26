@@ -3,7 +3,7 @@ import React from "react";
 export const Footer = () => {
   return (
     <footer className="mt-auto w-full border-t border-purple-500/20 bg-purple-900/20">
-      <div className="mx-auto flex max-w-4xl justify-between items-center gap-4 px-4 py-6 text-purple-300">
+      <div className="mx-auto flex flex-col sm:flex-row max-w-4xl justify-between items-center gap-4 px-4 py-6 text-purple-300">
         <p className="flex items-center gap-2">
           Built with <span className="text-red-500">❤️</span> by AI Code Lab
           Team
