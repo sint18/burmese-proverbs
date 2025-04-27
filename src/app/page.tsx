@@ -155,7 +155,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="mx-auto mt-8 max-w-4xl w-full max-h-[70vh] pb-16 overflow-y-auto">
+        <div className="mx-auto mt-8 max-w-4xl w-full sm:max-h-[70vh] pb-16 overflow-y-auto">
           {proverbs.length === 0 && !isLoadingMore ? (
             <div className="rounded-lg border border-purple-500/20 bg-purple-900/20 py-12 flex items-center justify-center">
               <p className="text-2xl text-purple-400">မရှိသေးပါ</p>
