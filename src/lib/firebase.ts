@@ -1,6 +1,5 @@
 "use server";
 import admin from "firebase-admin";
-import { snap } from "gsap";
 
 const serviceAccount = JSON.parse(
   process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT as string
